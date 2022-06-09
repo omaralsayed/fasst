@@ -35,14 +35,22 @@ OUTPUT_DIR = "./output"
 with open("{}/prompts.json".format(DATA_DIR), "r") as f:
     prompts = json.load(f)
 
-with open("{}/paths.json".format(DATA_DIR), "r") as f:
+with open("{}/paths.json".format(DATA_DIR),   "r") as f:
     paths = json.load(f)
 
 OPT = "opt-1.3b"
 r = 3 # Combinations
 
-generator = pipeline('text-generation', model="facebook/{}".format(OPT))
+if device == "cuda":
+    generator = pipeline('text-generation', model="facebook/{}".format(OPT), device=0)
+else:
+    generator = pipeline('text-generation', model="facebook/{}".format(OPT))
 tokenizer = AutoTokenizer.from_pretrained("facebook/{}".format(OPT), use_fast=False)
+
+def clean():
+    gc.collect()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
 
 
 def subset(arr, r):
@@ -124,7 +132,7 @@ def run(k):
 
     print("Extracting k-nearest neighbors...") # Indices
     src_neighbors = [get_neighbors(src_vector, aligned_tgt, k) \
-        for src_vector in tqdm.tqdm(aligned_src)]
+        for src_vector in tqdm.tqdm(aligned_src[0:10])]
     candidates = src_neighbors
 
     comb = {}
@@ -164,13 +172,11 @@ def run(k):
         with open(output_path, "a") as f:
             f.write(best_option.replace("{", " ").replace("}", " ").strip())
             f.write("\n")
+        
+        clean()
 
 
-if __name__ == "__main__":
-    gc.collect()
-    if torch.cuda.is_available():
-        torch.cuda.empty_cache()
-    
+if __name__ == "__main__":   
     parser = argparse.ArgumentParser()
     parser.add_argument("--k", type=int, default=4, help="Objects (nearest neighbors)")
     parser.add_argument("--r", type=int, default=3, help="Subset size to summarize")
