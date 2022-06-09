@@ -132,7 +132,7 @@ def run(k):
 
     print("Extracting k-nearest neighbors...") # Indices
     src_neighbors = [get_neighbors(src_vector, aligned_tgt, k) \
-        for src_vector in tqdm.tqdm(aligned_src[0:10])]
+        for src_vector in tqdm.tqdm(aligned_src)]
     candidates = src_neighbors
 
     comb = {}
