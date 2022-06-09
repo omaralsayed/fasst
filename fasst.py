@@ -126,7 +126,7 @@ def run(k):
 
     print("Extracting k-nearest neighbors...") # Indices
     src_neighbors = [get_neighbors(src_vector, aligned_tgt, k) \
-        for src_vector in tqdm.tqdm(aligned_src)]
+        for src_vector in tqdm.tqdm(aligned_src[0:2])]
     candidates = src_neighbors
 
     comb = {}
@@ -147,9 +147,9 @@ def run(k):
         for i,e in enumerate(src_neighbor_text):
             src_neighbor_text = [preprocess(text) for text in src_neighbor_text]
 
-            options.append(summarize(src_neighbor_text[i]))
+            options.append(summarize(args, src_neighbor_text[i]))
             
-            acc, cos_sim, cola_acc = evaluate([curr_input], [e], args.target_style)
+            acc, cos_sim, cola_acc = evaluate(args.target_style, [curr_input], [e])
             scores.append(acc * cos_sim * cola_acc)
             fallback.append((acc + cos_sim + cola_acc) / 3)
 
