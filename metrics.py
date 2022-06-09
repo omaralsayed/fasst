@@ -58,10 +58,10 @@ def get_accuracy_score(preds, target_style, embedding=[], model='centroids', lam
     else:
         out_dict = {"yelp_0": 0, "yelp_1": 0}
 
-    print("Loading Centroids...")
+    # print("Loading Centroids...")
     mean_vector_dict = classifier.load_style_mean_embeddings(training_embedding)
 
-    print("Embedding Text...")
+    # print("Embedding Text...")
     raw_text = preds
     if embedding == [] or type(embedding[0]) == str:
         text_embeddings = embed.embed_text(raw_text)
@@ -77,7 +77,7 @@ def get_accuracy_score(preds, target_style, embedding=[], model='centroids', lam
                 out_dict[style] = 1
 
     elif model == "tfidf_optimized":
-        print("Loading TFIDF Dictionaries...")
+        # print("Loading TFIDF Dictionaries...")
         style_tfidf_dict = classifier.load_style_tfidf_dict()
         for i in range(len(raw_text)):
             style = classifier.classify_tfidf(text_embeddings[i], raw_text[i], mean_vector_dict, style_tfidf_dict, lambda_score)
@@ -86,8 +86,7 @@ def get_accuracy_score(preds, target_style, embedding=[], model='centroids', lam
             else:
                 out_dict[style] = 1
 
-    print(out_dict.keys())
-    print("Target Style: {} Accuracy: {}".format(target_style, (out_dict[target_style] / len(raw_text))))
+    # print("Target Style: {} Accuracy: {}".format(target_style, (out_dict[target_style] / len(raw_text))))
     return (out_dict[target_style] / len(raw_text))
 
 
@@ -133,10 +132,6 @@ def get_accuracy_score(preds, target_style, embedding=[], model='centroids', lam
 
 
 def evaluate(target_style, inputs="", preds=""):
-    print(target_style)
-    print()
-    print(type(target_style))
-    print()
     if type(inputs[0]) != str:
         input_embeddings = inputs
     else:
@@ -152,12 +147,12 @@ def evaluate(target_style, inputs="", preds=""):
     # cola_stats = get_cola_stats(preds)
     cola_score = 1.0 #sum(cola_stats) / len(preds)
 
-    accuracy   = get_accuracy_score(preds, target_style, embedding=output_embeddings, model='tfidf_optimized', lambda_score=0.15)
+    accuracy   = get_accuracy_score(preds, target_style, embedding=output_embeddings, model='tfidf_optimized', lambda_score=0.75)
     similarity = get_similarity_score(inputs, preds, input_embeddings, output_embeddings)
     
-    print("ACC | SIM | FL |\n")
-    print("--- | --- | -- |\n")
-    print("{:.4f}|{:.4f}|{:.4f}|\n".format(accuracy, similarity, cola_score))
+    # print("ACC | SIM | FL |\n")
+    # print("--- | --- | -- |\n")
+    # print("{:.4f}|{:.4f}|{:.4f}|\n".format(accuracy, similarity, cola_score))
 
 
 

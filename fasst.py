@@ -4,10 +4,8 @@
 # 4. Extract the k-nearest neighbors of tgt
 # 5. Pass through OPT for text summarization
 
-
 import argparse
 import json
-
 
 import tqdm
 import torch
@@ -92,7 +90,7 @@ def summarize(args, text):
     else:
         input_ids = tokenizer(context, return_tensors="pt").input_ids
 
-    output = generator(context, max_length=input_ids.shape[1] + 24)[0]["generated_text"]
+    output = generator(context, max_length=input_ids.shape[1] + 32)[0]["generated_text"]
 
     output = output[len(context):] # Remove the context string from the output
     output = output.replace(prompts["prefixes"][args.target_style], "") # Remove prefix
@@ -126,13 +124,14 @@ def run(k):
 
     print("Extracting k-nearest neighbors...") # Indices
     src_neighbors = [get_neighbors(src_vector, aligned_tgt, k) \
-        for src_vector in tqdm.tqdm(aligned_src[0:2])]
+        for src_vector in tqdm.tqdm(aligned_src)]
     candidates = src_neighbors
 
     comb = {}
     for i, v in enumerate(candidates):
         comb[i] = subset(v, r)
 
+    print("Generating... Check output file for progress...")
     for l, v in comb.items():
         # Retrieve the text at the closest neighbors
         src_neighbor_text = [[tgt_text[i] for i in neighbor_indices] \
@@ -144,7 +143,7 @@ def run(k):
 
         options = []; scores = []; fallback = []
         curr_input = src_text[l]
-        for i,e in enumerate(src_neighbor_text):
+        for i, e in enumerate(src_neighbor_text):
             src_neighbor_text = [preprocess(text) for text in src_neighbor_text]
 
             options.append(summarize(args, src_neighbor_text[i]))
@@ -155,15 +154,15 @@ def run(k):
 
         if np.sum(scores) == 0:
             best_option = options[np.argmax(fallback)]
-            print("Best Score (using Mean) {}".format(np.max(fallback)))
+            # print("Best Score (using Mean) {}".format(np.max(fallback)))
         else:
             best_option = options[np.argmax(scores)]
-            print("Best Score (using J) {}".format(np.max(scores)))
+            # print("Best Score (using J) {}".format(np.max(scores)))
 
         with open(input_path,  "a") as f:
             f.write(curr_input)
         with open(output_path, "a") as f:
-            f.write(best_option)
+            f.write(best_option.replace("{", " ").replace("}", " ").strip())
             f.write("\n")
 
 
