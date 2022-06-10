@@ -9,11 +9,10 @@ from utils import get_similarity, make_directory, to_lower_remove_punc
 
 import json
 
-with open('./data/paths.json') as f:
-    paths = json.load(f)
-
 DATA_DIR = "./data"
-embedding_length = 1024
+
+with open("{}/paths.json".format(DATA_DIR), "r") as f:
+    paths = json.load(f)
 
 
 def create_style_mean_embeddings():

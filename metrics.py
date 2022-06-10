@@ -2,7 +2,6 @@ import numpy as np
 
 import classifier
 import embed
-from utils import load_txt_or_bpe
 import sys
 
 import os
