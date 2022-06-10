@@ -51,15 +51,8 @@ def get_similarity_score(input_strings, output_strings, input_embeddings=[], out
 def get_accuracy_score(preds, target_style, embedding=[], model='centroids', lambda_score=0.0):
     """Calculates whether the sentence is correctly classified.
     """
-    training_embedding = "{}/".format(DIR) +  paths["train"][target_style]["embedding"]
-
-    if target_style == "formal" or target_style == "informal":
-        out_dict = {"formal": 0, "informal": 0}
-    else:
-        out_dict = {"yelp_0": 0, "yelp_1": 0}
-
     # print("Loading Centroids...")
-    mean_vector_dict = classifier.load_style_mean_embeddings(training_embedding)
+    mean_vector_dict = classifier.load_style_mean_embeddings(target_style)
 
     # print("Embedding Text...")
     raw_text = preds
@@ -68,6 +61,7 @@ def get_accuracy_score(preds, target_style, embedding=[], model='centroids', lam
     else:
         text_embeddings = embedding
 
+    out_dict = dict()
     if model == "centroids":
         for i in range(len(raw_text)):
             style = classifier.classify_using_centroids(text_embeddings[i], mean_vector_dict)
@@ -78,7 +72,7 @@ def get_accuracy_score(preds, target_style, embedding=[], model='centroids', lam
 
     elif model == "tfidf_optimized":
         # print("Loading TFIDF Dictionaries...")
-        style_tfidf_dict = classifier.load_style_tfidf_dict()
+        style_tfidf_dict = classifier.load_style_tfidf_dicts(target_style)
         for i in range(len(raw_text)):
             style = classifier.classify_tfidf(text_embeddings[i], raw_text[i], mean_vector_dict, style_tfidf_dict, lambda_score)
             if style in out_dict:

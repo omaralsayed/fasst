@@ -1,11 +1,11 @@
-import glob
+import math
 import numpy as np
 import os
 import pickle
 
 import tqdm
 
-from utils import get_similarity, make_directory
+from utils import get_similarity, make_directory, to_lower_remove_punc
 
 import json
 
@@ -13,110 +13,127 @@ with open('./data/paths.json') as f:
     paths = json.load(f)
 
 DATA_DIR = "./data"
-# model_out_name = 'Out_Roberta'
 embedding_length = 1024
 
-# TRAIN_PATH = 'Data/Train/'
 
-
-def create_style_mean_embeddings(target_style):
+def create_style_mean_embeddings():
     """Creates mean embeddings for each style. This creates and saves them, then they need to be loaded.
     """
-    train_embeddings_path = "/".format(DATA_DIR) + paths["train"][target_style]["embedding"]
+    style_names = list(paths["train"])
+    for style in tqdm.tqdm(style_names, desc="Style Mean Vectors"):
+        train_embeddings_path = "{}/".format(DATA_DIR) + paths["train"][style]["embedding"]
 
-    if not os.path.isdir(train_embeddings_path):
-        print('Embeddings not found at \'{}\'. Cannot continue. Need to embed text'.format(train_embeddings_path))
-        raise Exception('Embeddings not found at \'{}\''.format(train_embeddings_path))
-    
-    # TODO: Fix the following to be consistent with new structure
-    # style_mean_vectors = np.empty((0, embedding_length), np.float32)
-    # style_dirs = sorted(glob.glob('{}/*'.format(train_embeddings_path)))
-    # style_names = []
-    # for style_dir in tqdm.tqdm(style_dirs, desc='Style Mean Vectors'):
-    #     style = os.path.basename(style_dir)
-    #     style_names.append(style)
-    #     style_embeddings_path = '{}/{}'.format(train_embeddings_path, style)
-    #     mean_vectors = np.empty((0, embedding_length), np.float32)
-    #     embedding_files = sorted(glob.glob('{}/*.npy'.format(style_embeddings_path)))
-    #     for file in embedding_files:
-    #         embeddings = np.load(file)
-    #         mean_vectors = np.vstack((mean_vectors, np.mean(embeddings, axis=0)))
-    #     style_mean_vectors = np.vstack((style_mean_vectors, np.mean(mean_vectors, axis=0)))
-    
-    # train_centroid_path = '{}/Style_Mean_Vectors'.format(model_out_name)
-    # make_directory(train_centroid_path)
-    # for i in range(len(style_names)):
-    #     style_vector = style_mean_vectors[i]
-    #     other_styles_mean = np.vstack((style_mean_vectors[0:i],style_mean_vectors[i+1:len(style_names)]))
-    #     other_styles_mean = np.mean(other_styles_mean, axis=0)
+        if not os.path.exists(train_embeddings_path):
+            print('Embeddings not found at \'{}\'. Cannot continue. Need to embed text'.format(train_embeddings_path))
+            raise Exception('Embeddings not found at \'{}\''.format(train_embeddings_path))
 
-    #     style_vector = np.vstack((style_vector, other_styles_mean))
-    #     np.save('{}/{}.npy'.format(train_centroid_path, style_names[i]), style_vector)
-
-
-# TODO: Make this work for current codebase
-# def create_style_tfidf_dictionaries():
-#     # Load text from all styles
-#     train_files = sorted(glob.glob('{}*'.format(TRAIN_PATH)))
-    
-#     # Make directory
-#     out_dir = 'Out/Style_TFIDF_Dictionaries'
-#     make_directory(out_dir)
-
-#     print('Loading training text...')
-#     document_style_dict = dict() # style : [all_text]
-#     for file in train_files:
-#         file_ext_split = os.path.splitext(file)
-#         data_name = os.path.basename(file_ext_split[0])
-#         print('\n\nData set: {}'.format(data_name))
-
-#         # Load data
-#         raw_text = load_txt_or_bpe(file)
-        
-#         raw_text = to_lower_remove_punc(raw_text)
-#         document_style_dict[data_name] = ' '.join(raw_text)
-    
-#     for data_name, document in document_style_dict.items():
-#         pkl_name = '{}/{}.pkl'.format(out_dir, data_name)
-#         if os.path.exists(pkl_name):
-#             continue
-
-#         print('\n\nData set: {}'.format(data_name))
-#         tfidf_dict = tfidf(document, document_style_dict.values())
-#         with open(pkl_name, 'wb') as f:
-#             pickle.dump(tfidf_dict, f)
+        embeddings = np.load(train_embeddings_path)
+        style_vector = np.mean(embeddings, axis=0)
+        style_centroid_path = "{}/".format(DATA_DIR) + paths["centroids"][style]["self"]
+        make_directory(os.path.dirname(style_centroid_path))
+        np.save(style_centroid_path, style_vector)       
 
 
 def load_style_mean_embeddings(target_style):
     """Load style mean embeddings vectors from files, or create them if they do not exist.
     """
-    train_centroid_path = "{}/centroids".format(DATA_DIR)
-    if not os.path.isdir(train_centroid_path):
+    self_centroid_path = "{}/".format(DATA_DIR) + paths["centroids"][target_style]["self"]
+    if not os.path.exists(self_centroid_path):
         print('Centroids are not yet computed. Computing...')
         create_style_mean_embeddings()
 
+    opposing_centroids = list(paths["centroids"][target_style]["opposing"])
+    for opposing in opposing_centroids:
+        if not os.path.exists("{}/".format(DATA_DIR) + paths["centroids"][target_style]["opposing"][opposing]):
+            print('Centroids are not yet computed. Computing...')
+            create_style_mean_embeddings()
+
     centroids_dict = dict()
-    files = sorted(glob.glob('{}/*.npy'.format(train_centroid_path)))
-    for file in files:
-        centroids_dict[os.path.basename(file).replace(".npy", "")] = np.load(file)
+    centroids_dict[target_style] = np.load(self_centroid_path)
+    for opposing in opposing_centroids:
+        centroids_dict[opposing] = np.load("{}/".format(DATA_DIR) + paths["centroids"][target_style]["opposing"][opposing])
 
     return centroids_dict
 
 
-def load_style_tfidf_dict():
+def idf(word, documents):
+    n = 0
+    for document in documents:
+        if word in document:
+            n += 1
+    return math.log(len(documents) / n)
+
+
+def tfidf(document, documents):
+    tf_dict = {}
+    for word in document.split():
+        if word in tf_dict:
+            tf_dict[word] += 1
+        else:
+            tf_dict[word] = 1
+
+    # Only keep words that occur at least 3 times
+    tf_dict = {k: v for k, v in tf_dict.items() if v >= 3}
+
+    tf_idf_dict = {}
+    for word in tqdm.tqdm(tf_dict):
+        tf_idf_dict[word] = tf_dict[word] * idf(word, documents)
+    
+    dict_mean = np.mean(list(tf_idf_dict.values()))
+    dict_std = np.std(list(tf_idf_dict.values()))
+
+    for word in tf_idf_dict.keys():
+        tf_idf_dict[word] = ((tf_idf_dict[word] - dict_mean) / dict_std)
+
+    return dict(sorted(tf_idf_dict.items(), key=lambda x: x[1], reverse=True))
+
+
+def create_style_tfidf_dictionaries():
+    # Load text from all styles
+    style_names = list(paths["train"])
+
+    #print('Loading training text...')
+    document_style_dict = dict() # style : [all_text]
+    for style in style_names:
+        with open("{}/".format(DATA_DIR) +  paths["train"][style]["text"], "r", encoding="utf-8") as f:
+            src_text = f.readlines()
+        
+        src_text = to_lower_remove_punc(src_text)
+        document_style_dict[style] = ' '.join(src_text)
+    
+    for style, document in document_style_dict.items():
+        pkl_name = "{}/".format(DATA_DIR) + paths["tfidf"][style]["self"]
+        if os.path.exists(pkl_name):
+            continue
+        
+        #print('\n\nData set: {}'.format(style))
+        tfidf_dict = tfidf(document, document_style_dict.values())
+
+        make_directory(os.path.dirname(pkl_name))
+        with open(pkl_name, 'wb') as f:
+            pickle.dump(tfidf_dict, f)
+
+
+def load_style_tfidf_dicts(target_style):
     """Load TFIDF dictionaries from files, or create them if they do not exist.
     """
-    dicts_path = "{}/tfidf".format(DATA_DIR)
-
-    if not os.path.exists(dicts_path):
+    self_tfidf_path = "{}/".format(DATA_DIR) + paths["tfidf"][target_style]["self"]
+    if not os.path.exists(self_tfidf_path):
         print('TFIDF Dictionaries are not yet created. Creating...')
-        # create_style_tfidf_dictionaries() # TODO: Uncomment when func is done
+        create_style_tfidf_dictionaries()
     
+    opposing_tfidf = list(paths["tfidf"][target_style]["opposing"])
+    for opposing in opposing_tfidf:
+        if not os.path.exists("{}/".format(DATA_DIR) + paths["tfidf"][target_style]["opposing"][opposing]):
+            print('TFIDF Dictionaries are not yet created. Creating...')
+            create_style_tfidf_dictionaries()
+
     tf_idf_dicts = dict()
-    files = sorted(glob.glob('{}/*.pkl'.format(dicts_path)))
-    for file in files:
-        with open(file, 'rb') as f:
-            tf_idf_dicts[os.path.basename(file).replace('.pkl', '')] = pickle.load(f)
+    with open(self_tfidf_path, 'rb') as f:
+        tf_idf_dicts[target_style] = pickle.load(f)
+    for opposing in opposing_tfidf:
+        with open("{}/".format(DATA_DIR) + paths["tfidf"][target_style]["opposing"][opposing], 'rb') as f:
+            tf_idf_dicts[opposing] = pickle.load(f)
 
     return tf_idf_dicts
 
@@ -127,8 +144,7 @@ def classify_using_centroids(text_embedding, style_mean_dict):
     sim_dict_score = dict()
     for style_name, style_mean in style_mean_dict.items():
         # First, calculate cosine similarity between centroids and text embedding
-        centroid_embedding = style_mean[0]
-        sim_dict_score[style_name] = get_similarity(text_embedding, centroid_embedding)
+        sim_dict_score[style_name] = get_similarity(text_embedding, style_mean)
 
     # Calculates classification score and chooses the style with highest similarity
     max_score = -1
@@ -152,8 +168,7 @@ def classify_tfidf(text_embedding, text_string, style_mean_dict, style_tfidf_dic
     style_tfidf_dict_score = dict()
     for style_name, style_mean in style_mean_dict.items():
         # First, calculate cosine similarity between centroids and text embedding
-        style_mean_embedding = style_mean[0]
-        sim_dict_score[style_name] = get_similarity(style_mean_embedding, text_embedding)
+        sim_dict_score[style_name] = get_similarity(style_mean, text_embedding)
 
         tfidf_dict = style_tfidf_dict[style_name]
         dict_score = 0
