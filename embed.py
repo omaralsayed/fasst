@@ -19,7 +19,7 @@ def embed_text(text):
     if model is None:
         try:
             from sentence_transformers import SentenceTransformer
-            model = SentenceTransformer('sentence-transformers/all-roberta-large-v1', device="cpu")#.to(device)
+            model = SentenceTransformer('sentence-transformers/all-roberta-large-v1', device="cpu")
         except ImportError:
             model = None
             print("SentenceTransformer not installed. Install with `pip install sentence-transformers`.")

@@ -39,7 +39,6 @@ with open("{}/paths.json".format(DATA_DIR),   "r") as f:
     paths = json.load(f)
 
 OPT = "opt-1.3b"
-r = 3 # Combinations
 
 if device == "cuda":
     generator = pipeline('text-generation', model="facebook/{}".format(OPT), device=0)
@@ -113,14 +112,14 @@ def preprocess(text):
     return re.sub(r"(?<=\S) +(?=['.,;:!?])", "", text.strip())
 
 
-def run(k):
+def run(k, r):
     with open("{}/".format(DATA_DIR) +  paths["test"][args.source_style]["text"], "r", encoding="utf-8") as f:
         src_text = f.readlines()
     with open("{}/".format(DATA_DIR) + paths["train"][args.target_style]["text"], "r", encoding="utf-8") as f:
         tgt_text = f.readlines()
 
-    input_path  = "{}/".format(OUTPUT_DIR) + args.source_style + "_to_" + args.target_style +  "_input_{}.txt".format(k)
-    output_path = "{}/".format(OUTPUT_DIR) + args.source_style + "_to_" + args.target_style + "_output_{}.txt".format(k)
+    input_path  = "{}/".format(OUTPUT_DIR) + args.source_style + "_to_" + args.target_style +  "_input_k{}_r{}.txt".format(k, r)
+    output_path = "{}/".format(OUTPUT_DIR) + args.source_style + "_to_" + args.target_style + "_output_k{}_r{}.txt".format(k, r)
 
     with open(input_path,  "w") as f:
         f.write("")
@@ -156,7 +155,7 @@ def run(k):
 
             options.append(summarize(args, src_neighbor_text[i]))
             
-            acc, cos_sim, cola_acc = evaluate(args.target_style, [curr_input], [e])
+            acc, cos_sim, cola_acc = evaluate(args.target_style, [curr_input], [e], float(args.lambda_score))
             scores.append(acc * cos_sim * cola_acc)
             fallback.append((acc + cos_sim + cola_acc) / 3)
 
@@ -172,7 +171,6 @@ def run(k):
         with open(output_path, "a") as f:
             f.write(best_option.replace("{", " ").replace("}", " ").strip())
             f.write("\n")
-        
         clean()
 
 
@@ -183,6 +181,7 @@ if __name__ == "__main__":
     parser.add_argument("--input",  type=str, default="", help="Input file")
     parser.add_argument("--source_style", type=str, default="", help="Source style")
     parser.add_argument("--target_style", type=str, default="", help="Target style")
+    parser.add_argument("--lambda_score", type=str, default="", help="Lambda score")
     args = parser.parse_args()
 
-    run(args.k)
+    run(args.k, args.r)

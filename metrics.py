@@ -49,7 +49,7 @@ def get_similarity_score(input_strings, output_strings, input_embeddings=[], out
 
 def get_accuracy_score(preds, target_style, embedding=[], model='centroids', lambda_score=0.0):
     """Calculates whether the sentence is correctly classified.
-    """
+    """   
     # print("Loading Centroids...")
     mean_vector_dict = classifier.load_style_mean_embeddings(target_style)
 
@@ -60,7 +60,11 @@ def get_accuracy_score(preds, target_style, embedding=[], model='centroids', lam
     else:
         text_embeddings = embedding
 
-    out_dict = dict()
+    if target_style == "formal" or target_style == "informal":
+        out_dict = {"formal": 0, "informal": 0}
+    else:
+        out_dict = {"yelp_0": 0, "yelp_1": 0}
+
     if model == "centroids":
         for i in range(len(raw_text)):
             style = classifier.classify_using_centroids(text_embeddings[i], mean_vector_dict)
@@ -124,7 +128,7 @@ def get_accuracy_score(preds, target_style, embedding=[], model='centroids', lam
 #     return np.array(cola_stats)
 
 
-def evaluate(target_style, inputs="", preds=""):
+def evaluate(target_style, inputs="", preds="", lambda_score=0.0):
     if type(inputs[0]) != str:
         input_embeddings = inputs
     else:
@@ -140,13 +144,12 @@ def evaluate(target_style, inputs="", preds=""):
     # cola_stats = get_cola_stats(preds)
     cola_score = 1.0 #sum(cola_stats) / len(preds)
 
-    accuracy   = get_accuracy_score(preds, target_style, embedding=output_embeddings, model='tfidf_optimized', lambda_score=0.75)
+    accuracy   = get_accuracy_score(preds, target_style, embedding=output_embeddings, model='tfidf_optimized', lambda_score=lambda_score)
     similarity = get_similarity_score(inputs, preds, input_embeddings, output_embeddings)
     
     # print("ACC | SIM | FL |\n")
     # print("--- | --- | -- |\n")
     # print("{:.4f}|{:.4f}|{:.4f}|\n".format(accuracy, similarity, cola_score))
-
 
 
     # cola_stats = get_cola_stats(preds)
