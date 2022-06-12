@@ -139,10 +139,8 @@ def evaluate(target_style, inputs="", preds="", lambda_score=0.0):
     else:
         output_embeddings = preds
 
-
-
-    # cola_stats = get_cola_stats(preds)
-    cola_score = 1.0 #sum(cola_stats) / len(preds)
+    cola_stats = 1#get_cola_stats(preds)
+    cola_score = 1#sum(cola_stats) / len(preds)
 
     accuracy   = get_accuracy_score(preds, target_style, embedding=output_embeddings, model='tfidf_optimized', lambda_score=lambda_score)
     similarity = get_similarity_score(inputs, preds, input_embeddings, output_embeddings)
@@ -150,7 +148,6 @@ def evaluate(target_style, inputs="", preds="", lambda_score=0.0):
     # print("ACC | SIM | FL |\n")
     # print("--- | --- | -- |\n")
     # print("{:.4f}|{:.4f}|{:.4f}|\n".format(accuracy, similarity, cola_score))
-
 
     # cola_stats = get_cola_stats(preds)
     # cola_score = sum(cola_stats) / len(preds)
