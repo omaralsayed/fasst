@@ -84,25 +84,29 @@
          "self":"tfidf/yelp_0.pkl",
          "opposing":{
             "yelp_1":"tfidf/yelp_1.pkl"
-         }
+         },
+         "lambda":0.15
       },
       "yelp_1":{
          "self":"tfidf/yelp_1.pkl",
          "opposing":{
             "yelp_0":"tfidf/yelp_0.pkl"
-         }
+         },
+         "lambda":0.15
       },
       "formal":{
          "self":"tfidf/formal.pkl",
          "opposing":{
             "informal":"tfidf/informal.pkl"
-         }
+         },
+         "lambda":0.03
       },
       "informal":{
          "self":"tfidf/informal.pkl",
          "opposing":{
             "formal":"tfidf/formal.pkl"
-         }
+         },
+         "lambda":0.03
       }
    }
 }
