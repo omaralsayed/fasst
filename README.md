@@ -55,7 +55,22 @@ Command line arguments for running are as follows:
 ```
 
 ## Running the Metrics
-**TODO: Instructions on how to run the metrics.**
+We provide three files to run metrics for models we evaluate.
+
+The file `runner_fasst_metric.py` is used to calculate the metrics for FASST model output.
+```
+python runner_fasst_metric.py
+```
+
+`runner_Luo_out_metric.py` can be used to calculate the metrics for the output data included in `Luo_output/`.
+```
+python runner_Luo_out_metric.py
+```
+
+`runner_OG_out_metric.py` can be used to calculate the metrics for the output data included in `OG_output/`.
+```
+python runner_OG_out_metric.py
+```
 
 ## FASST Outputs
 Text files containing out model outputs for Yelp and GYAFC are available in the `outputs/` directory. The files are labeled as according to the source followed by target style, then the parameters used in the re-ranking process outlined in the paper.
