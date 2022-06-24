@@ -52,3 +52,6 @@ def embed_full():
     embed_data("test")
     embed_data("train")
     embed_data("dev")
+
+if __name__ == "__main__":
+    embed_full()
