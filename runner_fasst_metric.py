@@ -21,7 +21,7 @@ DIR_GYAFC = "fasst_final_outputs/fasst_form"
 
 #combinations:
 # 33, 44, 43, 53, 54
-combination = [(3,3), (4,4), (4,3), (5,3), (5,4)]
+combination = [(3,3), (4,4), (4,3), (5,4)]
 
 def metrics_yelp(lambda_ = 0.166):
 
