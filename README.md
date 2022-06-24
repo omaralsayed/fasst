@@ -5,6 +5,8 @@
 - [fairseq](https://github.com/facebookresearch/fairseq)
 - [torch](https://pytorch.org/)
 - [transformers](https://github.com/huggingface/transformers)
+- cola (https://github.com/skoltech-nlp/detox)
+       (https://github.com/martiansideofthemoon/style-transfer-paraphrase)
 - nltk
 - numpy
 - sentence_transformers
