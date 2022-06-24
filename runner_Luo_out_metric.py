@@ -21,10 +21,10 @@ DIR_input_neg = "data/yelp_0/test.txt"
 DIR_input_pos = "data/yelp_1/test.txt"
 
 # THIS DIRECTORY NEED TO BE CHANGED AFTER THE DATA FOLDER I UPDATED
-#DIR_input_formal   = "../GYAFC_test/formal.txt"
-#DIR_input_informal = "../GYAFC_test/informal.txt"
-DIR_input_formal   = "data/formal/test.txt"
-DIR_input_informal = "data/informal/test.txt"
+DIR_input_formal   = "../GYAFC_test/formal.txt"
+DIR_input_informal = "../GYAFC_test/informal.txt"
+#DIR_input_formal   = "data/formal/test.txt"
+#DIR_input_informal = "data/informal/test.txt"
 
 with open(DIR_input_neg, "r") as input_neg_file, open(DIR_input_pos, "r") as input_pos_file:
             input_neg = input_neg_file.readlines()
@@ -56,9 +56,11 @@ DIR_GYAFC = "Luo_output/GYAFC"
 def run_metrics(lambda_=0.166, data = "yelp"):
 
     # list of models 
-    model_list = [#"BackTranslation_Pr", "CrossAlignment_Shen"]
+
+    model_list = ["BackTranslation_Pr", "CrossAlignment_Shen",
             "DeleteOnly_Li", "DeleteRetrieve_Li", "Multidecoder_Fu", "RetrieveOnly_Li", "StyleEmbedding_Fu", "TemplateBase_Li", "UnpairedRL_Xu", "UnsuperMT_Zhang"]
 
+    model_list = ["StyleEmbedding_Fu"]
     
     for model in model_list:
 
@@ -108,8 +110,8 @@ if __name__=="__main__":
     
 
 
-    #run_metrics(data="yelp", lambda_=0.166)
-    run_metrics(data="GYAFC", lambda_=0.115)
+    run_metrics(data="yelp", lambda_=0.166)
+    #run_metrics(data="GYAFC", lambda_=0.115)
 
     sys.exit()
 
