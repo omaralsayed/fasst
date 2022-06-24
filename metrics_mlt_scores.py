@@ -130,7 +130,11 @@ def get_accuracy_score(preds, target_style, embedding=[], model='tf_idf_optimize
     return (out_dict[target_style] / len(raw_text)), acc_vector
 
 def get_cola_stats(preds, soft=False, batch_size=32):
-    # based on https://github.com/martiansideofthemoon/style-transfer-paraphrase/blob/master/style_paraphrase/evaluation/scripts/roberta_classify.py
+    """ 
+    based on:
+    https://github.com/martiansideofthemoon/style-transfer-paraphrase/blob/master/style_paraphrase/evaluation/scripts/roberta_classify.py
+    https://github.com/skoltech-nlp/detox
+    """
     path_to_data = "models/cola/cola-bin"
 
     cola_classifier_path = "models/cola"
