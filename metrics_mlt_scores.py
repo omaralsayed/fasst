@@ -11,7 +11,6 @@ import torch
 import argparse
 
 from nltk.translate.bleu_score import sentence_bleu
-from wieting_similarity.similarity_evaluator import SimilarityEvaluator
 
 from fairseq.models.roberta import RobertaModel
 from fairseq.data.data_utils import collate_tokens
@@ -39,6 +38,10 @@ def get_similarity(input_vector, output_vector):
     return np.dot(input_vector, output_vector) / \
         (np.linalg.norm(input_vector) * np.linalg.norm(output_vector))
 
+
+def add_spacing(s):
+    s = re.sub('([.,!?()])', r' \1 ', s)
+    return re.sub('\s{2,}', ' ', s)
 
 
 # Disable
@@ -124,32 +127,10 @@ def get_accuracy_score(preds, target_style, embedding=[], model='tf_idf_optimize
             else:
                 out_dict[style] = 1
 
-            ##if style in out_dict:
-            ##    acc_vector_dict[style] = np.append(acc_vector_dict[style],1)
-            ##    out_dict[style] += 1
-            ##else:
-            ##    acc_vector_dict[style] = np.array([1])
-            ##    out_dict[style] = 1
-
-
-    # print("Target Style: {} Accuracy: {}".format(target_style, (out_dict[target_style] / len(raw_text))))
     return (out_dict[target_style] / len(raw_text)), acc_vector
 
-def calc_bleu(inputs, preds):
-    bleu_sim = 0
-    counter = 0
- #   print('Calculating BLEU similarity')
-    for i in range(len(inputs)):
-        if len(inputs[i]) > 3 and len(preds[i]) > 3:
-            bleu_sim += sentence_bleu([inputs[i]], preds[i])
-            counter += 1
-
-    return float(bleu_sim / counter)
-
-
 def get_cola_stats(preds, soft=False, batch_size=32):
-  #  print("Calculating Acceptability Score...")
-
+    # based on https://github.com/martiansideofthemoon/style-transfer-paraphrase/blob/master/style_paraphrase/evaluation/scripts/roberta_classify.py
     path_to_data = "models/cola/cola-bin"
 
     cola_classifier_path = "models/cola"
@@ -187,26 +168,6 @@ def get_cola_stats(preds, soft=False, batch_size=32):
 
     return np.array(cola_stats)
 
-def wieting_sim(inputs, preds, batch_size= 32):
-    assert len(inputs) == len(preds)
-    #print(len(inputs))
-    #print(len(preds))
-
-   # print('Calculating similarity by Wieting subword-embedding SIM model')
-    #sys.exit()
-
-    sim_evaluator = SimilarityEvaluator()
-
-    sim_scores = []
-
-    for i in tqdm.tqdm(range(0, len(inputs), batch_size)):
-        sim_scores.extend(
-            sim_evaluator.find_similarity(inputs[i:i + batch_size], preds[i:i + batch_size])
-        )
-
-    return np.array(sim_scores)
-
-
 
 def evaluate(target_style, inputs="", preds="", lambda_score=0.15):
     if type(inputs[0]) != str:
@@ -225,48 +186,35 @@ def evaluate(target_style, inputs="", preds="", lambda_score=0.15):
     accuracy, acc_vector   = get_accuracy_score(preds, target_style, embedding=output_embeddings, model='tfidf_optimized', lambda_score=lambda_score)
     cos_similarity, cos_similarity_vector= get_similarity_score(inputs, preds, input_embeddings, output_embeddings)
     
-    #print("acc",accuracy)
-    #print("acc_vec",sum(acc_vector)/len(acc_vector))
-
-    
-    #print("cos_sim_scr",cos_similarity)
-    #print("cos_sim_vec",sum(cos_similarity_vector)/len(cos_similarity_vector))
-
-    ## bleu score
-    
-    # Disable
-    blockPrint()
-    bleu = calc_bleu(inputs, preds)
-    # Restore
-    enablePrint()
-    
-    ## SIM by sent
-    similarity_by_sent = wieting_sim(inputs, preds)
-    avg_sim_by_sent = similarity_by_sent.mean()
-
-
-
-    #### J, mean, g2 anf h2
+    #### J, mean, gmean anf hmean
 
     # joint
-    J = sum(acc_vector*cos_similarity_vector*cola_stats)/len(preds)
-    # mean
-    mean = sum((acc_vector + cos_similarity_vector+cola_stats)/3)/len(preds)
-    # G2
-    gmean =sum(np.sqrt(abs(acc_vector*cos_similarity_vector*cola_stats)))/len(preds)
-    # H2
-    hmean = sum(3/(1/acc_vector + 1/cos_similarity_vector + 1/cola_stats))/len(preds)
+    J3 = accuracy*cos_similarity*cola_score
+    J2 = accuracy*cos_similarity
 
-###    # write res to table
-###    print('| ACC | SIM | COS | BLEU | FL |  J  | mean | g2 | h2 |\n')
-###    print('| --- | --- | ... | ---- | -- | --- | ---- | -- | -- |\n')
-###    print('|{:.3f}|{:.3f}|{:.3f}|{:.3f}|{:.3f}|{:.3f}|{:.3f}|{:.3f}|{:.3f}|\n'.format(accuracy, avg_sim_by_sent, cos_similarity, bleu, cola_score, J, mean,gmean,hmean))
+
+
+    # mean
+    mean3 = (accuracy+ cos_similarity+cola_score)/3
+    mean2 = (accuracy+ cos_similarity)/2
+
+    # G2
+    gmean =np.sqrt(accuracy*cos_similarity*cola_score)
+
+    # H2
+    hmean = 3/(1/accuracy + 1/cos_similarity + 1/cola_score)
+
+
+##    # write res to table
+##    print('| ACC | SIM | COS | FL |  J3 | J2 |  mean3| mean2| g2 | h2 |\n')
+##    print('| --- | --- | ... | -- | --- | -- |  ---- | ---- | -- | -- |\n')
+##    print('|{:.3f}|{:.3f}|{:.3f}|{:.3f}|{:.3f}|{:.3f}|{:.3f}|{:.3f}|{:.3f}|{:.3f}|\n'.format(accuracy, avg_sim_by_sent, cos_similarity, cola_score, J3, J2, mean3, mean2,gmean,hmean))
 
 
 
 
     gc.collect()
-    return accuracy, avg_sim_by_sent, cos_similarity, bleu, cola_score, J, mean,gmean,hmean
+    return accuracy, cos_similarity, cola_score, J3, J2, mean3, mean2, gmean,hmean
 
 
 if __name__ == "__main__":
@@ -276,8 +224,21 @@ if __name__ == "__main__":
     parser.add_argument("-s", "--style", help="Target style", required=True)
     args = parser.parse_args()
 
-    with open(args.inputs, "r") as input_file, open(args.preds, "r") as preds_file:
-        inputs = input_file.readlines()
-        preds  = preds_file.readlines()
+    with open(args.inputs, "r") as input_file, open(args.preds, "r") as preds_file:   
+        inputs_ = input_file.readlines()
+        preds_  = preds_file.readlines()
+        print("og, input length", len(inputs_))
+        print("og, output length", len(preds_))
+        inputs = []
+        preds  = []
+        for i, line in enumerate(preds_):
+            if len(line)>2:
+                inputs.append(inputs_[i])
+                preds.append(preds_[i])
+        
+        print("dlt, input length", len(inputs))
+        print("dlt, output length", len(preds))
+
+
 
     evaluate(args.style, inputs, preds)

@@ -17,37 +17,50 @@ clean()
 
 ### loading input
 # directory to input
-DIR_input_neg = "../Luo_output/YELP/"
-DIR_input_pos = "../Luo_output/YELP/"
+DIR_input_neg = "data/yelp_0/test.txt"
+DIR_input_pos = "data/yelp_1/test.txt"
 
-DIR_input_formal   = "../Luo_output/GYAFC/"
-DIR_input_informal = "../Luo_output/GYAFC/"
+# THIS DIRECTORY NEED TO BE CHANGED AFTER THE DATA FOLDER I UPDATED
+#DIR_input_formal   = "../GYAFC_test/formal.txt"
+#DIR_input_informal = "../GYAFC_test/informal.txt"
+DIR_input_formal   = "data/formal/test.txt"
+DIR_input_informal = "data/informal/test.txt"
+
+with open(DIR_input_neg, "r") as input_neg_file, open(DIR_input_pos, "r") as input_pos_file:
+            input_neg = input_neg_file.readlines()
+            input_pos = input_pos_file.readlines()
+
+with open(DIR_input_informal, "r") as input_informal_file, open(DIR_input_formal, "r") as input_formal_file:
+            input_informal = input_informal_file.readlines()
+            input_formal = input_formal_file.readlines()
+
+
+
+
+#DIR_input_neg = "Luo_output/YELP/"
+#DIR_input_pos = "Luo_output/YELP/"
+
+#DIR_input_formal   = "Luo_output/GYAFC/"
+#DIR_input_informal = "Luo_output/GYAFC/"
 
 
 
 # path to output data
-DIR_YELP = "../Luo_output/YELP"
-DIR_GYAFC = "../Luo_output/GYAFC"
+DIR_YELP = "Luo_output/YELP"
+DIR_GYAFC = "Luo_output/GYAFC"
 
 
 
 
 
-def run_metrics(lambda_=0.15, data = "yelp"):
+def run_metrics(lambda_=0.166, data = "yelp"):
 
     # list of models 
-    model_list = ["BackTranslation_Pr", "CrossAlignment_Shen", "DeleteOnly_Li", "DeleteRetrieve_Li", "Multidecoder_Fu", "RetrieveOnly_Li", "StyleEmbedding_Fu", "TemplateBase_Li", "UnpairedRL_Xu", "UnsuperMT_Zhang"]
+    model_list = [#"BackTranslation_Pr", "CrossAlignment_Shen"]
+            "DeleteOnly_Li", "DeleteRetrieve_Li", "Multidecoder_Fu", "RetrieveOnly_Li", "StyleEmbedding_Fu", "TemplateBase_Li", "UnpairedRL_Xu", "UnsuperMT_Zhang"]
 
     
     for model in model_list:
-        with open(DIR_input_neg + model+ "/input_neg.txt", "r") as input_neg_file, open(DIR_input_pos + model + "/input_neg.txt", "r") as input_pos_file:
-            input_neg = input_neg_file.readlines()
-            input_pos = input_pos_file.readlines()
-
-        with open(DIR_input_informal + model + "/input_informal.txt", "r") as input_informal_file, open(DIR_input_formal + model + "/input_formal.txt", "r") as input_formal_file:
-            input_informal = input_informal_file.readlines()
-            input_formal = input_formal_file.readlines()
-
 
         # load model data
         if data=="yelp":
@@ -63,14 +76,15 @@ def run_metrics(lambda_=0.15, data = "yelp"):
         
         else:
             print("GYAFC")
-            DIR_formal = "{}/{}/".format(DIR_GYAFC, model) + "input_formal.txt"
-            DIR_informal = "{}/{}/".format(DIR_GYAFC, model) + "input_informal.txt"
+            print(model)
+            DIR_formal = "{}/{}/".format(DIR_GYAFC, model) + "output_formal.txt"
+            DIR_informal = "{}/{}/".format(DIR_GYAFC, model) + "output_informal.txt"
             with open(DIR_formal, "r") as formal_file, open(DIR_informal, "r") as informal_file:
-                input_formal = formal_file.readlines()
-                input_informal = informal_file.readlines()
+                output_informal2formal = formal_file.readlines()
+                output_formal2informal = informal_file.readlines()
 
-            ret_val1 = evaluate("informal", input_formal_DualRL, output_formal2informal, lambda_)
-            ret_val2 = evaluate("formal", input_informal_DualRL, output_informal2formal, lambda_)
+            ret_val1 = evaluate("informal", input_formal, output_formal2informal, lambda_)
+            ret_val2 = evaluate("formal", input_informal, output_informal2formal, lambda_)
 
 
 
@@ -82,23 +96,20 @@ def run_metrics(lambda_=0.15, data = "yelp"):
         print("------------------- MEAN OF BOTH DIRECTION-------------------")
         print("{}".format(model))
 
-        print('| ACC | SIM | COS | BLEU | FL |  J  | mean | g2 | h2 |\n')
-        print('| --- | --- | ... | ---- | -- | --- | ---- | -- | -- |\n')
+        print('| ACC | COS | FL |  J3 |  J2 | mean3| mean2| g2 | h2 |\n')
+        print('| --- | --- | -- | --- | --- | ---- | ---- | -- | -- |\n')
 
         print('|{:.3f}|{:.3f}|{:.3f}|{:.3f}|{:.3f}|{:.3f}|{:.3f}|{:.3f}|{:.3f}|\n'.format(ret_mean[0], ret_mean[1], ret_mean[2], ret_mean[3], ret_mean[4],
             ret_mean[5], ret_mean[6], ret_mean[7], ret_mean[8] )
                 )
 
 
-
-
-
-
-
 if __name__=="__main__":
     
 
-    run_metrics(lambda_=0.15)
+
+    #run_metrics(data="yelp", lambda_=0.166)
+    run_metrics(data="GYAFC", lambda_=0.115)
 
     sys.exit()
 

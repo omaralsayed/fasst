@@ -21,8 +21,12 @@ DIR_input_neg = "data/yelp_0/test.txt"
 DIR_input_pos = "data/yelp_1/test.txt"
 
 # THIS DIRECTORY NEED TO BE CHANGED AFTER THE DATA FOLDER I UPDATED
-DIR_input_formal   = "../GYAFC_test/formal.txt"
-DIR_input_informal = "../GYAFC_test/informal.txt"
+#DIR_input_formal   = "../GYAFC_test/formal.txt"
+#DIR_input_informal = "../GYAFC_test/informal.txt"
+DIR_input_formal   = "data/formal/test.txt"
+DIR_input_informal = "data/informal/test.txt"
+
+
 
 with open(DIR_input_neg, "r") as input_neg_file, open(DIR_input_pos, "r") as input_pos_file:
     input_neg = input_neg_file.readlines()
@@ -34,12 +38,12 @@ with open(DIR_input_informal, "r") as input_informal_file, open(DIR_input_formal
 
 
 # path to output data
-DIR_YELP = "../OG_output/YELP"
-DIR_GYAFC = "../OG_output/GYAFC"
+
+DIR_YELP = "OG_output/YELP"
+DIR_GYAFC = "OG_output/GYAFC"
 
 
-
-def metrics_YELP(lambda_=0.15):
+def metrics_YELP(lambda_=0.166):
 
     # list of models with single output
     model_sgl = ["deep_latent_seq_He", "DualRL_Luo", "Styins_Yi"]
@@ -72,10 +76,10 @@ def metrics_YELP(lambda_=0.15):
         print("------------------- MEAN OF BOTH DIRECTION-------------------")
         print("{}".format(model))
     
-        print('| ACC | SIM | COS | BLEU | FL |  J  | mean | g2 | h2 |\n')
-        print('| --- | --- | ... | ---- | -- | --- | ---- | -- | -- |\n')
+        print('| ACC | COS | FL |  J3 |  J2 | mean3 | mean2 | g2 | h2 |\n')
+        print('| --- | ... | -- | --- | --- | ----  | ----  | -- | -- |\n')
     
-        print('|{:.3f}|{:.3f}|{:.3f}|{:.3f}|{:.3f}|{:.3f}|{:.3f}|{:.3f}|{:.3f}|\n'.format(ret_mean[0], ret_mean[1], ret_mean[2], ret_mean[3], ret_mean[4],
+        print('|{:.3f}|{:.3f}|{:.3f}|{:.3f}|{:.3f}|{:.3f}|{:.3f}|{:.3f}|{:.3f}| \n'.format(ret_mean[0], ret_mean[1], ret_mean[2], ret_mean[3], ret_mean[4],
             ret_mean[5], ret_mean[6], ret_mean[7], ret_mean[8] )
                 )
     ######### MODELS with multiple outputs ###########
@@ -108,8 +112,8 @@ def metrics_YELP(lambda_=0.15):
             print("------------------- MEAN OF BOTH DIRECTION-------------------")
             print("{}; {}".format(model, sub_model))
     
-            print('| ACC | SIM | COS | BLEU | FL |  J  | mean | g2 | h2 |\n')
-            print('| --- | --- | ... | ---- | -- | --- | ---- | -- | -- |\n')
+            print('| ACC | COS |  FL |  J3 |  J2 | mean3 | mean2| g2 | h2 |\n')
+            print('| --- | --- | ... | --- | --- | ----  | ---- | -- | -- |\n')
     
             print('|{:.3f}|{:.3f}|{:.3f}|{:.3f}|{:.3f}|{:.3f}|{:.3f}|{:.3f}|{:.3f}|\n'.format(ret_mean[0], ret_mean[1], ret_mean[2], ret_mean[3], ret_mean[4],
                 ret_mean[5], ret_mean[6], ret_mean[7], ret_mean[8] )
@@ -160,8 +164,8 @@ def metrics_GYAFC(lambda_=0.029):
         print("------------------- MEAN OF BOTH DIRECTION-------------------")
         print("{}".format(model))
 
-        print('| ACC | SIM | COS | BLEU | FL |  J  | mean | g2 | h2 |\n')
-        print('| --- | --- | ... | ---- | -- | --- | ---- | -- | -- |\n')
+        print('| ACC | COS | FL |  J3 |  J2 | mean3 | mean2 | g2 | h2 |\n')
+        print('| --- | ... | -- | --- | --- | ----- | ----- | -- | -- | \n')
 
         print('|{:.3f}|{:.3f}|{:.3f}|{:.3f}|{:.3f}|{:.3f}|{:.3f}|{:.3f}|{:.3f}|\n'.format(ret_mean[0], ret_mean[1], ret_mean[2], ret_mean[3], ret_mean[4],
             ret_mean[5], ret_mean[6], ret_mean[7], ret_mean[8] )
@@ -200,8 +204,8 @@ def metrics_GYAFC(lambda_=0.029):
             print("------------------- MEAN OF BOTH DIRECTION-------------------")
             print("{}; {}".format(model, sub_model))
 
-            print('| ACC | SIM | COS | BLEU | FL |  J  | mean | g2 | h2 |\n')
-            print('| --- | --- | ... | ---- | -- | --- | ---- | -- | -- |\n')
+            print('| ACC | COS |  FL |  J3 | J2 | mean3 | mean2 | g2 | h2 |\n')
+            print('| --- | --- | ... | --- | -- | ----- | ----- | -- | -- |\n')
 
             print('|{:.3f}|{:.3f}|{:.3f}|{:.3f}|{:.3f}|{:.3f}|{:.3f}|{:.3f}|{:.3f}|\n'.format(ret_mean[0], ret_mean[1], ret_mean[2], ret_mean[3], ret_mean[4],
                 ret_mean[5], ret_mean[6], ret_mean[7], ret_mean[8] )
@@ -212,11 +216,10 @@ def metrics_GYAFC(lambda_=0.029):
 
 if __name__=="__main__":
     
-    metrics_GYAFC(lambda_=0.029)
+    metrics_GYAFC(lambda_=0.115)
 
-    #metrics_YELP(lambda_=0.15)
+    #metrics_YELP(lambda_=0.166)
 
-    sys.exit()
 
 
 
