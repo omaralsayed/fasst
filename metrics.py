@@ -10,8 +10,8 @@ import tqdm
 import torch
 import argparse
 
-# from fairseq.models.roberta import RobertaModel
-# from fairseq.data.data_utils import collate_tokens
+from fairseq.models.roberta import RobertaModel
+from fairseq.data.data_utils import collate_tokens
 
 import re
 import json
@@ -89,45 +89,45 @@ def get_accuracy_score(preds, target_style, embedding=[], model='centroids', lam
     return (out_dict[target_style] / len(raw_text))
 
 
-# def get_cola_stats(preds, soft=False, batch_size=32):
-#     print("Calculating Acceptability Score...")
+def get_cola_stats(preds, soft=False, batch_size=32):
+    print("Calculating Acceptability Score...")
 
-#     path_to_data = "models/cola/cola-bin"
+    path_to_data = "models/cola/cola-bin"
 
-#     cola_classifier_path = "models/cola"
-#     cola_checkpoint = "checkpoint_best.pt"
+    cola_classifier_path = "models/cola"
+    cola_checkpoint = "checkpoint_best.pt"
 
-#     cola_roberta = RobertaModel.from_pretrained(
-#         cola_classifier_path, 
-#         checkpoint_file=cola_checkpoint,
-#         data_name_or_path=path_to_data
-#     )
-#     cola_roberta.eval()
+    cola_roberta = RobertaModel.from_pretrained(
+        cola_classifier_path, 
+        checkpoint_file=cola_checkpoint,
+        data_name_or_path=path_to_data
+    )
+    cola_roberta.eval()
 
-#     cola_stats = []
-#     for i in tqdm.tqdm(range(0, len(preds), batch_size), total=len(preds) // batch_size):
-#         sentences = preds[i:i + batch_size]
+    cola_stats = []
+    for i in tqdm.tqdm(range(0, len(preds), batch_size), total=len(preds) // batch_size):
+        sentences = preds[i:i + batch_size]
 
-#         # Detokenize and BPE encode input
-#         sentences = [cola_roberta.bpe.encode(detokenize(sent)) for sent in sentences]
+        # Detokenize and BPE encode input
+        sentences = [cola_roberta.bpe.encode(detokenize(sent)) for sent in sentences]
 
-#         batch = collate_tokens(
-#             [cola_roberta.task.source_dictionary.encode_line("<s> " + sent + " </s>", 
-#                 append_eos=False) for sent in sentences], pad_idx=1
-#         )
+        batch = collate_tokens(
+            [cola_roberta.task.source_dictionary.encode_line("<s> " + sent + " </s>", 
+                append_eos=False) for sent in sentences], pad_idx=1
+        )
 
-#         batch = batch[:, :512]
-#         with torch.no_grad():
-#             predictions = cola_roberta.predict("sentence_classification_head", batch.long())
+        batch = batch[:, :512]
+        with torch.no_grad():
+            predictions = cola_roberta.predict("sentence_classification_head", batch.long())
 
-#         if soft:
-#             prediction_labels = torch.softmax(predictions, axis=1)[:, 1].cpu().numpy()
-#         else:
-#             prediction_labels = predictions.argmax(axis=1).cpu().numpy()
+        if soft:
+            prediction_labels = torch.softmax(predictions, axis=1)[:, 1].cpu().numpy()
+        else:
+            prediction_labels = predictions.argmax(axis=1).cpu().numpy()
 
-#         cola_stats.extend(list(1 - prediction_labels))
+        cola_stats.extend(list(1 - prediction_labels))
 
-#     return np.array(cola_stats)
+    return np.array(cola_stats)
 
 
 def evaluate(target_style, inputs="", preds="", lambda_score=None):
@@ -141,8 +141,8 @@ def evaluate(target_style, inputs="", preds="", lambda_score=None):
     else:
         output_embeddings = preds
 
-    cola_stats = 1#get_cola_stats(preds)
-    cola_score = 1#sum(cola_stats) / len(preds)
+    cola_stats = get_cola_stats(preds)
+    cola_score = sum(cola_stats) / len(preds)
 
     accuracy   = get_accuracy_score(preds, target_style, embedding=output_embeddings, model='tfidf_optimized', lambda_score=lambda_score)
     similarity = get_similarity_score(inputs, preds, input_embeddings, output_embeddings)
