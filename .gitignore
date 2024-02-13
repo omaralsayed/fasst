@@ -1,6 +1,4 @@
 # Data
-data/*
-!data/paths.json
 models/
 
 # Byte-compiled / optimized / DLL files
